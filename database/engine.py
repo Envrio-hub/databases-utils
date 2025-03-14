@@ -5,11 +5,9 @@ __last_updated__='2024-10-02'
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, scoped_session
-from .aws_utils import SecretsManager
-# from aws_utils import SecretsManager
+from aws_utils.aws_utils import SecretsManager
 from dotenv import load_dotenv
-from .logger import alchemy
-# from logger import alchemy
+from envrio_logger.logger import alchemy
 import os
 
 # Load variables from the .env file

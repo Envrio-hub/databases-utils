@@ -1,20 +1,28 @@
-__version__='1.2.0'
+__version__='1.2.1'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-11-16'
-__last_updated__='2024-11-25'
+__last_updated__='2025-02-17'
 
 from influxdb_client import InfluxDBClient, Bucket, BucketRetentionRules
 from influxdb_client.client.write_api import SYNCHRONOUS
-from datetime import datetime
-from typing import Union
-from .aws_utils import SecretsManager
+from datetime import datetime, timedelta
+from typing import Union, Annotated
+from pydantic.types import condecimal
+from aws_utils.aws_utils import SecretsManager
 from dotenv import load_dotenv
-from .decorators import influxdb_error_handler
-from .logger import influxdb
+from database.engine import SessionLocal
+from databases_companion.decorators import DatabaseDecorators
+from envrio_logger.logger import influxdb
+from sqlalchemy.orm import Session
+from decimal import Decimal
 import os
 
 # Load variables from the .env file
 load_dotenv()
+
+# Intantiate decorators
+db_decorators = DatabaseDecorators(SessionLocal=SessionLocal, Session=Session)
+
 
 class InfluxConnector():
 
@@ -29,7 +37,7 @@ class InfluxConnector():
 
 class DataManagement(InfluxConnector):
 
-    @influxdb_error_handler
+    @db_decorators.influxdb_error_handler
     def write_point(self, measurement:str, sensor_id:int, unit:str, data:dict):
         write_api = self.client.write_api(write_options=SYNCHRONOUS)
         records =[]
@@ -37,14 +45,14 @@ class DataManagement(InfluxConnector):
             point = {
                 'measurement': measurement,
                 'tags': {'sensor_id': sensor_id},
-                'fields': {unit: float(data['values'][i]) if data['values'][i] is not None else data['values'][i]},
+                'fields': {unit: float(data['values'].iloc[i]) if data['values'].iloc[i] is not None else data['values'].iloc[i]},
                 'time': data['date_time'][i].strftime('%Y-%m-%dT%H:%M:%S')
                 }
             records.append(point)
         write_api.write(bucket=self.bucket_name, org=self.org, record=records)
         influxdb.info(f"message: Data successfully persisted to the bucket: {self.bucket_name}, measurement: {measurement}")        
 
-    @influxdb_error_handler
+    @db_decorators.influxdb_error_handler
     def delete_rows(self, measurement:str, tag:str, start:Union[str,datetime], stop:Union[str,datetime] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")):
         # Define api methods
         delete_api = self.client.delete_api()
@@ -52,18 +60,20 @@ class DataManagement(InfluxConnector):
         delete_api.delete(start,stop,predicate = f'_measurement = "{measurement}" and sensor_id = "{tag}"',bucket = self.bucket_name,org = self.org)
         influxdb.info(f"message: Data successfully deleted from the bucket: {self.bucket_name}, measurement: {measurement}, sensor_id: {tag}, from: {start} to: {stop}")
 
-    @influxdb_error_handler
-    def query_data_raw(self,measurement: str,sensor_id: int,unit: str,start: Union[str, datetime],stop: Union[str, datetime] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")):
+    @db_decorators.influxdb_error_handler
+    def query_data_raw(self,measurement: str,sensor_id: int,unit: str,
+                       start: Annotated[Decimal, condecimal(max_digits=15, decimal_places=3)] = Decimal(str(round((datetime.now() - timedelta(days=1)).timestamp(), 3))),
+                       stop: Annotated[Decimal, condecimal(max_digits=15, decimal_places=3)] = Decimal(str(round(datetime.now().timestamp(), 3)))):
         query_api = self.client.query_api()
         data_frame = query_api.query_data_frame(f'''from(bucket:"{self.bucket_name}") 
-                                                    |> range(start: {start.strftime("%Y-%m-%dT%H:%M:%SZ")}, stop: {stop.strftime("%Y-%m-%dT%H:%M:%SZ")}) 
-                                                    |> filter(fn: (r) => r["_measurement"] == "{measurement}" and r["sensor_id"] == "{str(sensor_id)}")
+                                                    |> range(start: {datetime.fromtimestamp(float(start)).strftime("%Y-%m-%dT%H:%M:%SZ")}, stop: {datetime.fromtimestamp(float(stop)).strftime("%Y-%m-%dT%H:%M:%SZ")}) 
+                                                    |> filter(fn: (r) => r["_measurement"] == "{measurement}" and r["sensor_id"] == "{sensor_id}")
                                                     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
                                                     |> keep(columns: ["_time","sensor_id", "{unit}"])''')
         influxdb.info(f"message: Data from bucket: {self.bucket_name}, measurement: {measurement}, sensor_id: {sensor_id} between: {start} and {stop} retrived successfully")
         return data_frame
     
-    @influxdb_error_handler
+    @db_decorators.influxdb_error_handler
     def query_data_hourly(self,measurement: str,sensor_id: int,unit: str,start: Union[str, datetime],stop: Union[str, datetime] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")):
         query_api = self.client.query_api()
         data_frame = query_api.query_data_frame(f'''from(bucket:"{self.bucket_name}") 
@@ -90,7 +100,7 @@ class DataManagement(InfluxConnector):
 
 class BucketConfiguration(InfluxConnector):
     
-    @influxdb_error_handler
+    @db_decorators.influxdb_error_handler
     def list_buckets(self):
         buckets_api = self.client.buckets_api()
         buckets = buckets_api.find_buckets().buckets
@@ -98,7 +108,7 @@ class BucketConfiguration(InfluxConnector):
                 for bucket in buckets]))
         return buckets
     
-    @influxdb_error_handler
+    @db_decorators.influxdb_error_handler
     def update_bucket(self, type='expire', data_duration=0, shard_group_duration=630720000, description='Update to a 20 years shard group duration'):
         buckets_api=self.client.buckets_api()
         bucket_info=buckets_api.find_bucket_by_name(self.bucket_name)
@@ -115,3 +125,4 @@ class BucketConfiguration(InfluxConnector):
         buckets_api.update_bucket(bucket = bucket_update)
         influxdb.info(f"message: bucket: {self.bucket_name} updated succefully - {buckets_api.find_bucket_by_name(self.bucket_name)}")
         return print(buckets_api.find_bucket_by_name(self.bucket_name))
+

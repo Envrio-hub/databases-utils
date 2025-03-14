@@ -1,10 +1,10 @@
-__version__='1.4.0'
+__version__='1.4.1'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2024-11-22'
+__last_updated__='2025-03-14'
 
 from pydantic import BaseModel
-from .enum_variables import AccountType, IconType
+from databases_companion.enum_variables import AccountType, IconType
 
 # Base Models
 class UsersTableBase(BaseModel):
