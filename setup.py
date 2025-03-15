@@ -14,7 +14,7 @@ setup(
         'influxdb-client>=1.39.0',
         'mysql-connector-python>=9.1.0',
         'python-dotenv>=1.0.1',
-        'boto3>=1.35.68',
+        'boto3>=1.36.7',
         'aws_utils @ git+https://github.com/Envrio-hub/aws_utils.git@1.1.0',
         'databases_companion @ git+https://github.com/Envrio-hub/LibCompanion.git@0.1.0'
     ],
