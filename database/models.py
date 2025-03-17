@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-__version__='1.6.1'
+__version__='1.6.2'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-14'
+__last_updated__='2025-03-17'
 
 from databases_companion.enum_variables import AccountType, ApplicationType, AdviceStatus, IconType
-from engine import Base
+from database.engine import Base
 from sqlalchemy import ForeignKey, Numeric, String, JSON, Boolean, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import  Mapped, mapped_column
 

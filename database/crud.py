@@ -3,13 +3,13 @@ __authors__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
 __last_updated__='2025-03-14'
 
-from database import models, schemas
+from database import models, schemas, engine
 from sqlalchemy.orm import Session
 from sqlalchemy import text, select, update
 from aws_utils.aws_utils import KeyManagementService
 from databases_companion.decorators import DatabaseDecorators, DTypeValidator
 
-data_base_decorators = DatabaseDecorators()
+data_base_decorators = DatabaseDecorators(SessionLocal=engine.SessionLocal, Session=Session)
 data_type_validator = DTypeValidator()
 
 class User:
