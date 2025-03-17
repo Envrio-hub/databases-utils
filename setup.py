@@ -16,7 +16,7 @@ setup(
         'python-dotenv>=1.0.1',
         'boto3>=1.36.7',
         'aws_utils @ git+https://github.com/Envrio-hub/aws_utils.git@1.1.0',
-        'databases_companion @ git+https://github.com/Envrio-hub/LibCompanion.git@main'
+        'databases_companion @ git+https://github.com/Envrio-hub/LibCompanion.git@0.1.0'
     ],
     classifiers=[  
         'Development Status :: 4 - Beta',
