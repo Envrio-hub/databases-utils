@@ -3,7 +3,7 @@ __authors__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
 __last_updated__='2025-03-14'
 
-from databases_utils import models, schemas
+from database import models, schemas
 from sqlalchemy.orm import Session
 from sqlalchemy import text, select, update
 from aws_utils.aws_utils import KeyManagementService
