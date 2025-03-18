@@ -110,7 +110,7 @@ class DavisWeatherStationsBase(BaseModel):
 class DavisMonitoringDevicesBase(BaseModel):
     monitoring_device_id: int
     station_id: int
-    station_id_uuid: str
+    station_id_uuid: int
     measurement: str
     created_date: float
     modified_date: float

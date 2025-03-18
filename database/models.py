@@ -7,8 +7,9 @@ __last_updated__='2025-03-17'
 
 from databases_companion.enum_variables import AccountType, ApplicationType, AdviceStatus, IconType
 from database.engine import Base
-from sqlalchemy import ForeignKey, Numeric, String, JSON, Boolean, Enum as SQLAlchemyEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String, JSON, Boolean, DateTime, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import  Mapped, mapped_column
+from datetime import datetime
 
 # Users
 class Users(Base):
@@ -18,7 +19,7 @@ class Users(Base):
     aws_user_name: Mapped[str] = mapped_column(String(500), nullable=False)
     email: Mapped[str] = mapped_column(String(500), nullable=False)
     account_type: Mapped[AccountType] = mapped_column(SQLAlchemyEnum(AccountType), nullable=False)
-    subscription_expires_in: Mapped[float] = mapped_column(nullable=False)
+    subscription_expires_in: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
 # Devices
 class IoTDevices(Base):
@@ -54,7 +55,7 @@ class ADCONServer(Base):
     serial: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     time_zone: Mapped[str] = mapped_column(String(20), nullable=False)
-    last_update: Mapped[float] = mapped_column(nullable=False)
+    last_update: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     slot_interval: Mapped[int] = mapped_column(nullable=False)
     get_data_max_slots: Mapped[int] = mapped_column(nullable=False)
     get_data_max_nodes: Mapped[int] = mapped_column(nullable=False)
@@ -93,7 +94,7 @@ class ADCONRtus(Base):
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     altitude: Mapped[float] = mapped_column(nullable=False)
-    field_id: Mapped[int] = mapped_column(ForeignKey('fields_registry.field_id', ondelete='SET NULL'))
+    field_id: Mapped[int | None] = mapped_column(ForeignKey('fields_registry.field_id', ondelete='SET NULL'), nullable=True)
 
 class ADCONMonitoringDevices(Base):
     __tablename__ = 'adcon_monitoring_control_devices'
@@ -126,8 +127,8 @@ class DavisWeatherStations(Base):
     active: Mapped[bool] = mapped_column(type_=Boolean, nullable=False, default=True)
     recording_interval: Mapped[int] = mapped_column(nullable=False)
     firmware_version: Mapped[str] = mapped_column(String(20))
-    registered_date: Mapped[float] = mapped_column(nullable=False)
-    subscription_end_data: Mapped[float] = mapped_column(nullable=False)
+    registered_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    subscription_end_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     time_zone: Mapped[str] = mapped_column(String(25), nullable=False)
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
@@ -141,10 +142,10 @@ class DavisMonitoringDevices(Base):
 
     monitoring_device_id: Mapped[int] = mapped_column(primary_key=True)
     station_id: Mapped[int] = mapped_column(ForeignKey('davis_weather_stations.station_id', ondelete='CASCADE'))
-    station_id_uuid: Mapped[str] = mapped_column(ForeignKey('davis_weather_stations.station_id_uuid', ondelete='CASCADE'))
+    station_id_uuid: Mapped[int] = mapped_column(ForeignKey('davis_weather_stations.station_id_uuid', ondelete='CASCADE'))
     measurement: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_date: Mapped[float] = mapped_column(nullable=False)
-    modified_date: Mapped[float] = mapped_column(nullable=False)
+    created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    modified_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     active: Mapped[bool] = mapped_column(type_=Boolean, nullable=False, default=True)    
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
@@ -155,12 +156,12 @@ class DavisMonitoringDevices(Base):
 class MetricaStations(Base):
     __tablename__ = 'metrica_stations'
 
-    station_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    station_id: Mapped[str] = mapped_column(String(60), primary_key=True)
     device_id: Mapped[int] = mapped_column(ForeignKey('IoTdevices.device_id', ondelete='CASCADE'), unique=True, nullable=False)
     station_code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     title: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    creation_date: Mapped[str] = mapped_column(String(50), nullable=True) # Date format %Y-%m-%d %H:%M:%S e.g., 2023-04-07 06:08:03
-    last_update: Mapped[str] = mapped_column(String(50), nullable=True, default=True) # Date format %d/%m/%y %H:%M:%S e.g.,  22/11/24 13:00:04
+    creation_date: Mapped[datetime] = mapped_column(DateTime, nullable=True) # Date format %Y-%m-%d %H:%M:%S e.g., 2023-04-07 06:08:03
+    last_update: Mapped[datetime] = mapped_column(DateTime, nullable=True, default=True) # Date format %d/%m/%y %H:%M:%S e.g.,  22/11/24 13:00:04
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
@@ -177,7 +178,7 @@ class MetricaMonitoringDevices(Base):
     title: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     id_sensor_of_station: Mapped[str] = mapped_column(String(20), nullable=False)
     sensor_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_date: Mapped[float] = mapped_column(nullable=False)
+    created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
@@ -222,7 +223,7 @@ class FarmsRegistry(Base):
 class FieldsRegistry(Base):
     __tablename__ = 'fields_registry'
     
-    field_id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
+    field_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     farm_id: Mapped[int] = mapped_column(ForeignKey('farms_registry.farm_id',ondelete='CASCADE'), nullable=False)
     boundaries: Mapped[dict] = mapped_column(type_=JSON, nullable=False)
     soil_properties: Mapped[dict] = mapped_column(type_=JSON) # {"hydraulic":[{"depth":20,"sat":45,"fc":35,"pwp":15,"ksat":40}], "physical":[{"depth":20,"sat":45,"fc":35,"pwp":15,"ksat":40}]}}
