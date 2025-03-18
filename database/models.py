@@ -119,7 +119,7 @@ class DavisWeatherStations(Base):
 
     station_id: Mapped[int] = mapped_column(primary_key=True)
     device_id: Mapped[int] = mapped_column(ForeignKey('IoTdevices.device_id', ondelete='CASCADE'), unique=True, nullable=False)
-    station_id_uuid: Mapped[int] = mapped_column(unique=True, nullable=False)
+    station_id_uuid: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     station_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     gateway_id: Mapped[int] = mapped_column(unique=True, nullable=False)
     gateway_id_hex: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
@@ -141,8 +141,8 @@ class DavisMonitoringDevices(Base):
     __tablename__ = 'davis_monitoring_devices'
 
     monitoring_device_id: Mapped[int] = mapped_column(primary_key=True)
-    station_id: Mapped[int] = mapped_column(ForeignKey('davis_weather_stations.station_id', ondelete='CASCADE'))
-    station_id_uuid: Mapped[int] = mapped_column(ForeignKey('davis_weather_stations.station_id_uuid', ondelete='CASCADE'))
+    station_id: Mapped[int] = mapped_column(ForeignKey('davis_weather_stations.station_id', ondelete='CASCADE'), nullable=False)
+    station_id_uuid: Mapped[str] = mapped_column(String(100), ForeignKey('davis_weather_stations.station_id_uuid', ondelete='CASCADE'))
     measurement: Mapped[str] = mapped_column(String(20), nullable=False)
     created_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     modified_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)

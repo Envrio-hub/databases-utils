@@ -34,7 +34,7 @@ class User:
 
     @staticmethod
     @data_type_validator.validate_str('email')
-    @data_type_validator.session_handler_query
+    @data_base_decorators.session_handler_query
     def get_by_email(email: str, db: Session = None):
         return db.execute(select(models.Users).filter_by(email=email)).scalar()
 
