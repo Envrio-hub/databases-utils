@@ -3,8 +3,10 @@ __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
 __last_updated__='2025-03-18'
 
-from pydantic import BaseModel
+from pydantic import BaseModel, condecimal
 from databases_companion.enum_variables import AccountType, IconType
+from typing import Annotated
+from decimal import Decimal
 
 # Base Models
 class UsersTableBase(BaseModel):
@@ -58,8 +60,8 @@ class ADCONRtusBase(BaseModel):
     template: str
     main_class : str
     sub_class : str
-    latitude: float
-    longitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     altitude: float
     type : str
     version : str
@@ -96,10 +98,10 @@ class DavisWeatherStationsBase(BaseModel):
     recording_interval: int
     firmware_version: str
     registered_date: float
-    subscription_end_data: float
+    subscription_end_date: float
     time_zone: str
-    latitude: float
-    longitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     gateway_type: str
     farm_id: int
@@ -113,8 +115,8 @@ class DavisMonitoringDevicesBase(BaseModel):
     created_date: float
     modified_date: float
     active: bool
-    latitude: float
-    longitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     reference_offset: float
 
@@ -125,8 +127,8 @@ class MetricaStationsBase(BaseModel):
     title: str
     creation_date: str
     last_update: str
-    latitude: float
-    longitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     farm_id: int
     field_ids: dict
@@ -140,8 +142,8 @@ class MetricaMonitoringDevicesBase(BaseModel):
     id_sensor_of_station: str
     sensor_type: str
     created_date: float
-    latitude: float
-    longitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     reference_offset: float
 
@@ -162,8 +164,8 @@ class ADCONApiCredentialsBase(BaseModel):
 
 class FarmsRegistryBase(BaseModel):
     user_id: int
-    longitude: float
-    latitude: float
+    latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
+    longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
 
 class FieldsRegistyBase(BaseModel):
     farm_id: int

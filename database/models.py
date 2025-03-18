@@ -90,8 +90,8 @@ class ADCONRtus(Base):
     first_slot: Mapped[int] = mapped_column(nullable=True, default=None)
     last_slot: Mapped[int] = mapped_column(nullable=True, default=None)  
     active: Mapped[bool] = mapped_column(nullable=True, default=True)
-    latitude: Mapped[float] = mapped_column(nullable= False)
-    longitude: Mapped[float] = mapped_column(nullable=False)
+    latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
+    longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     altitude: Mapped[float] = mapped_column(nullable=False)
     field_id: Mapped[int] = mapped_column(ForeignKey('fields_registry.field_id', ondelete='SET NULL'))
 
@@ -129,8 +129,8 @@ class DavisWeatherStations(Base):
     registered_date: Mapped[float] = mapped_column(nullable=False)
     subscription_end_data: Mapped[float] = mapped_column(nullable=False)
     time_zone: Mapped[str] = mapped_column(String(25), nullable=False)
-    latitude: Mapped[float] = mapped_column(nullable=False)
-    longitude: Mapped[float] = mapped_column(nullable=False)
+    latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
+    longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     gateway_type: Mapped[str] = mapped_column(String(50))
     farm_id: Mapped[int] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
@@ -146,8 +146,8 @@ class DavisMonitoringDevices(Base):
     created_date: Mapped[float] = mapped_column(nullable=False)
     modified_date: Mapped[float] = mapped_column(nullable=False)
     active: Mapped[bool] = mapped_column(type_=Boolean, nullable=False, default=True)    
-    latitude: Mapped[float] = mapped_column(nullable=False)
-    longitude: Mapped[float] = mapped_column(nullable=False)
+    latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
+    longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     reference_offset: Mapped[float] = mapped_column(nullable=False)
 
@@ -161,8 +161,8 @@ class MetricaStations(Base):
     title: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     creation_date: Mapped[str] = mapped_column(String(50), nullable=True) # Date format %Y-%m-%d %H:%M:%S e.g., 2023-04-07 06:08:03
     last_update: Mapped[str] = mapped_column(String(50), nullable=True, default=True) # Date format %d/%m/%y %H:%M:%S e.g.,  22/11/24 13:00:04
-    latitude: Mapped[float] = mapped_column(nullable=False)
-    longitude: Mapped[float] = mapped_column(nullable=False)
+    latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
+    longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     farm_id: Mapped[int] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
     field_ids: Mapped[dict] = mapped_column(type_=JSON, nullable=True) # {"field_ids":[1,3,4,...]}
@@ -178,8 +178,8 @@ class MetricaMonitoringDevices(Base):
     id_sensor_of_station: Mapped[str] = mapped_column(String(20), nullable=False)
     sensor_type: Mapped[str] = mapped_column(String(50), nullable=False)
     created_date: Mapped[float] = mapped_column(nullable=False)
-    latitude: Mapped[float] = mapped_column(nullable=False)
-    longitude: Mapped[float] = mapped_column(nullable=False)
+    latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
+    longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     reference_offset: Mapped[float] = mapped_column(nullable=False)
 

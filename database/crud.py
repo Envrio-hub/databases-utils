@@ -24,27 +24,27 @@ class User:
     @data_type_validator.validate_str('aws_user_name')
     @data_base_decorators.session_handler_query
     def get_by_name(name: str, db: Session = None):
-        return db.execute(select(models.Users).filter_by(aws_user_name=name)).one_or_none()
+        return db.execute(select(models.Users).filter_by(aws_user_name=name)).scalar()
 
     @staticmethod
     @data_type_validator.validate_int('user_id')
     @data_base_decorators.session_handler_query
     def get_by_id(user_id: int, db: Session = None):
-        return db.execute(select(models.Users).filter_by(user_id=user_id)).one_or_none()
+        return db.execute(select(models.Users).filter_by(user_id=user_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('email')
     @data_type_validator.session_handler_query
     def get_by_email(email: str, db: Session = None):
-        return db.execute(select(models.Users).filter_by(email=email)).one_or_none()
+        return db.execute(select(models.Users).filter_by(email=email)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('aws_user_name')
     @data_base_decorators.session_handler_add_delete_update
     def delete_by_name(name: str, db: Session = None):
-            result = db.execute(select(models.Users).filter_by(aws_user_name=name)).one_or_none()
-            if result is not None:
-                db.delete(result.Users)
+            result = db.execute(select(models.Users).filter_by(aws_user_name=name)).scalar()
+            if result:
+                db.delete(result)
             else:
                 return {"message": "Not Found", "errors": ["The provided name does not exist in the users table"]}, 404
 
@@ -53,14 +53,15 @@ class IoTDevices:
     @staticmethod
     @data_base_decorators.session_handler_add_delete_update
     def add(IoT_device: schemas.IoTDevicesCreate, db: Session = None):
-        new_device = models.IoTDevices(manufacturer_id=IoT_device.manufacturer_id, access=IoT_device.access, icon_type=IoT_device.icon_type)
+        new_device = models.IoTDevices(manufacturer_id=IoT_device.manufacturer_id, access=IoT_device.access,
+                                       template=IoT_device.template, icon_type=IoT_device.icon_type)
         db.add(new_device)
 
     @staticmethod
     @data_type_validator.validate_int('device_id')
     @data_base_decorators.session_handler_query
     def get_by_id(device_id: int, db: Session = None):
-        return db.execute(select(models.IoTDevices).filter_by(device_id = device_id)).one_or_none()
+        return db.execute(select(models.IoTDevices).filter_by(device_id = device_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('manufacturer')
@@ -77,34 +78,41 @@ class IoTDevices:
     @staticmethod
     @data_type_validator.validate_int('station_id','user_id')
     @data_base_decorators.session_handler_add_delete_update
-    def add_user_to_station(device_id: int, user_id: int, db: Session = None):
-        access=db.execute(select(models.IoTDevices).filter_by(device_id=device_id)).one_or_none()
+    def add_user_to_device(device_id: int, user_id: int, db: Session = None):
+        access=db.execute(select(models.IoTDevices).filter_by(device_id=device_id)).scalar()
         if user_id not in access[0].access['users']:
             access[0].access['users'].append(user_id)
 
     @staticmethod
-    @data_type_validator.validate_int('station_id','user_id')
     @data_base_decorators.session_handler_query
-    def delete_user_from_station(device_id: int, user_id: int, db: Session = None):
-        access=db.execute(select(models.IoTDevices).filter_by(device_id=device_id)).one_or_none()
-        if access.IoTdevices:
+    def get_last_entry(db: Session = None):
+        return db.execute(text("SELECT LAST_INSERT_ID()")).scalar()
+
+    @staticmethod
+    @data_type_validator.validate_int('device_id','user_id')
+    @data_base_decorators.session_handler_add_delete_update
+    def delete_user_from_device(device_id: int, user_id: int, db: Session = None):
+        access=db.execute(select(models.IoTDevices).filter_by(device_id=device_id)).scalar()
+        if access:
             if user_id not in access[0].access['users']:
                 access[0].access['users'].remove(user_id)
+        else:
+            return {"message": "Not Found", "errors": ["The provided device_id does not exist in the stations table", "The provided user is not registered in the proided device_id"]}, 404
 
     @staticmethod
     @data_type_validator.validate_int('device_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_device_id(device_id: int, db: Session = None):
-        result = db.execute(select(models.IoTDevices).filter_by(device_id = device_id)).one_or_none()
-        if result is not None:
-            db.delete(result.IoTdevices)
+        result = db.execute(select(models.IoTDevices).filter_by(device_id = device_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided device_id does not exist in the stations table"]}, 404
 
 class Manufacturers:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(manufacturer: schemas.ManufacturersCreate, db: Session = None):
         new_manufacturer = models.Manufacturers(name=manufacturer.name, api_url=manufacturer.api_url, api_version=manufacturer.api_version,
                                                 templates=manufacturer.templates)
@@ -114,12 +122,12 @@ class Manufacturers:
     @data_type_validator.validate_str('name')
     @data_base_decorators.session_handler_query
     def get_by_name(name: str, db: Session = None):
-        return db.execute(select(models.Manufacturers).filter_by(name=name)).one_or_none()
+        return db.execute(select(models.Manufacturers).filter_by(name=name)).scalar()
 
 class ADCONServer:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(server: schemas.ADCONServerCreate, db: Session = None):
         new_server = models.ADCONServer(server_id=server.server_id, source_id=server.source_id, template=server.template, name=server.name, main_class=server.main_class,
                                         sub_class=server.sub_class, type=server.type, version=server.version, serial=server.serial, code=server.code, time_zone=server.time_zone,
@@ -130,31 +138,31 @@ class ADCONServer:
     @data_type_validator.validate_int('server_id')
     @data_base_decorators.session_handler_query
     def get_by_id(server_id: str, db: Session = None):
-        return db.execute(select(models.ADCONServer).filter_by(server_id = server_id)).one_or_none()
+        return db.execute(select(models.ADCONServer).filter_by(server_id = server_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('source_id')
     @data_base_decorators.session_handler_query
     def get_by_code(source_id: str, db: Session = None):
-        return db.execute(select(models.ADCONServer).filter_by(source_id= source_id)).one_or_none()
+        return db.execute(select(models.ADCONServer).filter_by(source_id= source_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('serial')
     @data_base_decorators.session_handler_query
     def get_by_serial(serial: str, db: Session = None):
-        return db.execute(select(models.ADCONServer).filter_by(serial=serial)).one_or_none()
+        return db.execute(select(models.ADCONServer).filter_by(serial=serial)).scalar()
     
     @staticmethod
     @data_type_validator.validate_int('server_id')
     @data_type_validator.validate_float('new_datetime')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_last_update(server_id: int, new_datetime: float, db: Session = None):
         db.execute(update(models.ADCONServer).where(models.ADCONServer.server_id==server_id).values(last_update=new_datetime))
 
 class ADCONArea:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(area: schemas.ADCONAreaCreate, db: Session = None):
         new_are = models.ADCONArea(server_id=area.server_id, source_id=area.source_id, name=area.name, template=area.template, main_class=area.main_class, sub_class=area.sub_class)
         db.add(new_are)
@@ -163,38 +171,38 @@ class ADCONArea:
     @data_type_validator.validate_int('area_id')
     @data_base_decorators.session_handler_query
     def get_by_area_id(area_id: int, db: Session = None):
-        return db.execute(select(models.ADCONArea).filter_by(area_id=area_id)).one_or_none()
+        return db.execute(select(models.ADCONArea).filter_by(area_id=area_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('source_id')
     @data_base_decorators.session_handler_query
     def get_by_source_id(source_id: str, db: Session = None):
-        return db.execute(select(models.ADCONArea).filter_by(source_id=source_id)).one_or_none()
+        return db.execute(select(models.ADCONArea).filter_by(source_id=source_id)).scalar()
     
     @staticmethod
     @data_type_validator.validate_str('source_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_source_id(source_id: str, db: Session = None):
-        result = db.execute(select(models.ADCONArea).filter_by(source_id=source_id)).one_or_none()
-        if result is not None:
-            db.delete(result.ADCONArea)
+        result = db.execute(select(models.ADCONArea).filter_by(source_id=source_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided area source id does not exist"]}, 404
         
     @staticmethod
     @data_type_validator.validate_int('area_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_area_id(area_id: int, db: Session = None):
-        result = db.execute(select(models.ADCONArea).filter_by(area_id=area_id)).one_or_none()
-        if result is not None:
-            db.delete(result.ADCONArea)
+        result = db.execute(select(models.ADCONArea).filter_by(area_id=area_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided area id does not exist"]}, 404
              
 class ADCONRtus:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(rtu: schemas.ADCONRtusCreate, db: Session = None):
         new_rtu = models.ADCONRtus(rtu_id=rtu.rtu_id, area_id=rtu.area_id, source_id=rtu.source_id, name=rtu.name, template=rtu.template, main_class=rtu.main_class,
                                    sub_class=rtu.sub_class, latitude=rtu.latitude, longitude=rtu.longitude, altitude=rtu.altitude, type=rtu.type, version=rtu.version,
@@ -211,25 +219,25 @@ class ADCONRtus:
     @data_type_validator.validate_int('rtu_id')
     @data_base_decorators.session_handler_query
     def get_by_rtu_id(rtu_id: int, db: Session = None):
-        return db.execute(select(models.ADCONRtus).filter_by(rtu_id=rtu_id)).one_or_none()
+        return db.execute(select(models.ADCONRtus).filter_by(rtu_id=rtu_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('source_id')
     @data_base_decorators.session_handler_query
     def get_by_source_id(source_id: str, db: Session = None):
-        return db.execute(select(models.ADCONRtus).filter_by(source_id=source_id)).one_or_none()
+        return db.execute(select(models.ADCONRtus).filter_by(source_id=source_id)).scalar()
     
     @staticmethod
     @data_type_validator.validate_str('source_id', 'new_status')
     @data_type_validator.validate_float('last_slot')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_comminication_status_by_source_id(source_id: str, new_status: bool, last_slot: float, db: Session = None):
         db.execute(update(models.ADCONRtus).where(models.ADCONRtus.source_id==source_id).values(active=new_status, last_slot=last_slot))
 
 class ADCONMonitoringDevices:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(monitoring_device: schemas.ADCONMonitoringDevicesCreate, db: Session = None):
         new_monitoring_device = models.ADCONMonitoringDevices(monitoring_device.rtu_id, monitoring_device.source_id, monitoring_device.name, monitoring_device.measurement,
                                                               monitoring_device.template, monitoring_device.main_class, monitoring_device.sub_class, monitoring_device.type,
@@ -254,7 +262,7 @@ class ADCONMonitoringDevices:
     @data_type_validator.validate_str('source_id')
     @data_base_decorators.session_handler_query
     def get_by_source_id(source_id: str, db: Session = None):
-        return db.execute(select(models.ADCONMonitoringDevices).filter_by(source_id=source_id)).one_or_none()
+        return db.execute(select(models.ADCONMonitoringDevices).filter_by(source_id=source_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('measurement')
@@ -264,34 +272,34 @@ class ADCONMonitoringDevices:
     
     @staticmethod
     @data_type_validator.validate_str('source_id', 'new_status')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_comminication_status_by_source_id(source_id: str, new_status: bool, db: Session = None):
         db.execute(update(models.ADCONMonitoringDevices).where(models.ADCONMonitoringDevices.source_id==source_id).values(active=new_status))
 
     @staticmethod
     @data_type_validator.validate_str('source_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_source_id(source_id: int, db: Session = None):
-        result = db.execute(select(models.ADCONMonitoringDevices).filter_by(source_id=source_id)).one_or_none()
-        if result is not None:
-            db.delete(result.ADCONADCONMonitoringDevices)
+        result = db.execute(select(models.ADCONMonitoringDevices).filter_by(source_id=source_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided monitoring device source id does not exist"]}, 404
         
     @staticmethod
     @data_type_validator.validate_int('monitoring_device_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_source_id(monitoring_device_id: int, db: Session = None):
-        result = db.execute(select(models.ADCONMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).one_or_none()
-        if result is not None:
-            db.delete(result.ADCONADCONMonitoringDevices)
+        result = db.execute(select(models.ADCONMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided monitoring device id does not exist"]}, 404
         
 class DavisWeatherStations:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(weather_station: schemas.DavisWeatherStationsCreate, db: Session = None):
         new_weather_station = models.DavisWeatherStations(weather_station.station_id, weather_station.station_id_uuid, weather_station.station_name, weather_station.gateway_id,
                                                             weather_station.gateway_id_hex, weather_station.product_number, weather_station.active, weather_station.recording_interval,
@@ -304,31 +312,31 @@ class DavisWeatherStations:
     @data_type_validator.validate_int('station_id')
     @data_base_decorators.session_handler_query
     def get_by_station_id(station_id: int, db: Session = None):
-        return db.execute(select(models.DavisWeatherStations).filter_by(station_id=station_id)).one_or_none()
+        return db.execute(select(models.DavisWeatherStations).filter_by(station_id=station_id)).scalar()
     
     @staticmethod
     @data_type_validator.validate_int('station_id_uuid')
     @data_base_decorators.session_handler_query
     def get_by_station_uuid(station_id_uuid: int, db: Session = None):
-        return db.execute(select(models.DavisWeatherStations).filter_by(station_id_uuid=station_id_uuid)).one_or_none()
+        return db.execute(select(models.DavisWeatherStations).filter_by(station_id_uuid=station_id_uuid)).scalar()
     
     @staticmethod
     @data_type_validator.validate_int('device_id')
     @data_base_decorators.session_handler_query
     def get_by_device_id(device_id: int, db: Session = None):
-        return db.execute(select(models.DavisWeatherStations).filter_by(device_id=device_id)).one_or_none()
+        return db.execute(select(models.DavisWeatherStations).filter_by(device_id=device_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_status')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_comminication_status_by_station_id(station_id: int, new_status: bool, db: Session = None):
         db.execute(update(models.DavisWeatherStations).where(models.DavisWeatherStations.station_id==station_id).values(active=new_status))
 
 class DavisMonitoringDevices:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(monitoring_device: schemas.DavisMonitoringDevicesCreate, db: Session = None):
         new_monitoring_device = models.DavisMonitoringDevices(monitoring_device.monitoring_device_id, monitoring_device.station_id, monitoring_device.station_id_uuid,
                                                               monitoring_device.measurement, monitoring_device.created_date, monitoring_device.modified_date, monitoring_device.active,
@@ -339,7 +347,7 @@ class DavisMonitoringDevices:
     @data_base_decorators.session_handler_query
     @data_type_validator.validate_int('monitoring_device_id')
     def get_by_monitoring_device_id(monitoring_device_id: int, db: Session = None):
-        db.execute(select(models.DavisMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).one_or_none()
+        db.execute(select(models.DavisMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).scalar()
 
     @staticmethod
     @data_base_decorators.session_handler_query
@@ -348,13 +356,13 @@ class DavisMonitoringDevices:
         db.execute(select(models.DavisMonitoringDevices).filter_by(station_id=station_id)).all()
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     @data_type_validator.validate_int('monitoring_device_id')
     def update_status_by_monitoring_device_id(monitoring_device_id: int, new_status: bool, db: Session = None):
         db.execute(update(models.DavisMonitoringDevices).where(models.DavisMonitoringDevices.monitoring_device_id==monitoring_device_id).values(active=new_status))
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     @data_type_validator.validate_int('monitoring_device_id')
     def update_modified_date_by_monitoring_device_id(monitoring_device_id: int, new_modified_date:float, db: Session = None):
         db.execute(update(models.DavisMonitoringDevices).where(models.DavisMonitoringDevices.monitoring_device_id==monitoring_device_id).values(modified_date=new_modified_date))
@@ -362,7 +370,7 @@ class DavisMonitoringDevices:
 class MetricaStations:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(station: schemas.MetricaStationsCreate, db: Session = None):
         new_station = models.MetricaStations(station.station_id, station.device_id, station.station_code, station.title, station. creation_date,
                                              station.last_update, station.latitude, station.longitude, station.elevation, station.farm_id,
@@ -373,30 +381,30 @@ class MetricaStations:
     @data_type_validator.validate_str('station_id')
     @data_base_decorators.session_handler_query
     def get_by_station_id(station_id: str, db: Session = None):
-        return db.execute(select(models.MetricaStations).filter_by(station_id=station_id)).one_or_none()
+        return db.execute(select(models.MetricaStations).filter_by(station_id=station_id)).scalar()
     
     @staticmethod
     @data_type_validator.validate_str('station_code')
     @data_base_decorators.session_handler_query
     def get_by_station_code(station_code: str, db: Session = None):
-        return db.execute(select(models.MetricaStations).filter_by(station_code=station_code)).one_or_none()
+        return db.execute(select(models.MetricaStations).filter_by(station_code=station_code)).scalar()
     
     @staticmethod
     @data_type_validator.validate_int('device_id')
     @data_base_decorators.session_handler_query
     def get_by_device_id(device_id: int, db: Session = None):
-        return db.execute(select(models.MetricaStations).filter_by(device_id=device_id)).one_or_none()
+        return db.execute(select(models.MetricaStations).filter_by(device_id=device_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_str('station_id','new_status')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_comminication_status_by_station_id(station_id: str, new_update: str, db: Session = None):
         db.execute(update(models.MetricaStations).where(models.MetricaStations.station_id==station_id).values(last_update=new_update))
 
 class MetricaMonitoringDevices:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(monitoring_device: schemas.MetricaMonitoringDevicesCreate, db: Session = None):
         new_monitoring_device = models.MetricaMonitoringDevices(monitoring_device.monitoring_device_id, monitoring_device.station_id, monitoring_device.station_code,
                                                                 monitoring_device.measurement, monitoring_device.title, monitoring_device.id_sensor_of_station,
@@ -408,7 +416,7 @@ class MetricaMonitoringDevices:
     @data_base_decorators.session_handler_query
     @data_type_validator.validate_int('monitoring_device_id')
     def get_by_monitoring_device_id(monitoring_device_id: int, db: Session = None):
-        db.execute(select(models.MetricaMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).one_or_none()
+        db.execute(select(models.MetricaMonitoringDevices).filter_by(monitoring_device_id=monitoring_device_id)).scalar()
 
     @staticmethod
     @data_base_decorators.session_handler_query
@@ -419,7 +427,7 @@ class MetricaMonitoringDevices:
 class DavisApiCredentials:
 
     @staticmethod
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def add(api_cred: schemas.DavisApiCredentialsCreate, db: Session = None):
         encrypt_key_id = KeyManagementService().encrypt_data(unencrypted_text=api_cred.key_id, key_id=api_cred.key_id)
         encrypt_secrete_name = KeyManagementService().encrypt_data(unencrypted_text=api_cred.secret_name, key_id=api_cred.key_id)
@@ -430,29 +438,29 @@ class DavisApiCredentials:
     @data_type_validator.validate_int('station_id')
     @data_base_decorators.session_handler_query
     def get_by_station_id(station_id: int, db: Session = None):
-        return db.execute(select(models.DavisApiCredentials).filter_by(station_id=station_id)).one_or_none()
+        return db.execute(select(models.DavisApiCredentials).filter_by(station_id=station_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_key_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_key_id_by_station_id(station_id: int, new_key_id: str, db: Session = None):
         db.execute(update(models.DavisApiCredentials).where(models.DavisApiCredentials.station_id==station_id).values(key_id=new_key_id))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_secret_name')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_secret_name_by_station_id(station_id: int, new_secret_name: str, db: Session = None):
         db.execute(update(models.DavisApiCredentials).where(models.DavisApiCredentials.station_id==station_id).values(secret_name=new_secret_name))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_station_id(station_id: int, db: Session = None):
-        result = db.execute(select(models.DavisApiCredentials).filter_by(station_id=station_id)).one_or_none()
-        if result is not None:
-            db.delete(result.DavisApiCredentials)
+        result = db.execute(select(models.DavisApiCredentials).filter_by(station_id=station_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided station is does not exist"]}, 404
         
@@ -470,29 +478,29 @@ class MetricaApiCredentials:
     @data_type_validator.validate_int('station_id')
     @data_base_decorators.session_handler_query
     def get_by_station_id(station_id: int, db: Session = None):
-        return db.execute(select(models.MetricaApiCredentials).filter_by(station_id=station_id)).one_or_none()
+        return db.execute(select(models.MetricaApiCredentials).filter_by(station_id=station_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_key_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_key_id_by_station_id(station_id: int, new_key_id: str, db: Session = None):
         db.execute(update(models.MetricaApiCredentials).where(models.MetricaApiCredentials.station_id==station_id).values(key_id=new_key_id))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_secret_name')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_secret_name_by_station_id(station_id: int, new_secret_name: str, db: Session = None):
         db.execute(update(models.MetricaApiCredentials).where(models.MetricaApiCredentials.station_id==station_id).values(secret_name=new_secret_name))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_station_id(station_id: int, db: Session = None):
-        result = db.execute(select(models.MetricaApiCredentials).filter_by(station_id=station_id)).one_or_none()
-        if result is not None:
-            db.delete(result.MetricaApiCredentials)
+        result = db.execute(select(models.MetricaApiCredentials).filter_by(station_id=station_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided station is does not exist"]}, 404
         
@@ -510,28 +518,28 @@ class ADCONApiCredentials:
     @data_type_validator.validate_int('station_id')
     @data_base_decorators.session_handler_query
     def get_by_station_id(station_id: int, db: Session = None):
-        return db.execute(select(models.ADCONApiCredentials).filter_by(station_id=station_id)).one_or_none()
+        return db.execute(select(models.ADCONApiCredentials).filter_by(station_id=station_id)).scalar()
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_key_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_key_id_by_station_id(station_id: int, new_key_id: str, db: Session = None):
         db.execute(update(models.ADCONApiCredentials).where(models.ADCONApiCredentials.station_id==station_id).values(key_id=new_key_id))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
     @data_type_validator.validate_str('new_secret_name')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def update_secret_name_by_station_id(station_id: int, new_secret_name: str, db: Session = None):
         db.execute(update(models.ADCONApiCredentials).where(models.ADCONApiCredentials.station_id==station_id).values(secret_name=new_secret_name))
 
     @staticmethod
     @data_type_validator.validate_int('station_id')
-    @data_base_decorators.session_handler_query
+    @data_base_decorators.session_handler_add_delete_update
     def delete_by_station_id(station_id: int, db: Session = None):
-        result = db.execute(select(models.ADCONApiCredentials).filter_by(station_id=station_id)).one_or_none()
-        if result is not None:
-            db.delete(result.ADCONApiCredentials)
+        result = db.execute(select(models.ADCONApiCredentials).filter_by(station_id=station_id)).scalar()
+        if result:
+            db.delete(result)
         else:
             return {"message": "Not Found", "errors": ["The provided station is does not exist"]}, 404
