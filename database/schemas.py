@@ -1,7 +1,7 @@
-__version__='1.4.1'
+__version__='1.4.2'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-14'
+__last_updated__='2025-03-18'
 
 from pydantic import BaseModel
 from databases_companion.enum_variables import AccountType, IconType
@@ -15,6 +15,7 @@ class UsersTableBase(BaseModel):
 
 class IoTDevicesBase(BaseModel):
     manufacturer_id: int
+    template: str
     access: dict
     icon_type: IconType
 
