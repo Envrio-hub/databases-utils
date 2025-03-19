@@ -1,11 +1,11 @@
-__version__='1.4.2'
+__version__='1.4.3'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-18'
+__last_updated__='2025-03-19'
 
 from pydantic import BaseModel, condecimal
 from databases_companion.enum_variables import AccountType, IconType
-from typing import Annotated
+from typing import Annotated, Optional
 from decimal import Decimal
 
 # Base Models
@@ -89,7 +89,7 @@ class ADCONMonitoringDevicesBase(BaseModel):
 class DavisWeatherStationsBase(BaseModel):
     station_id: int
     device_id: int
-    station_id_uuid: int
+    station_id_uuid: str
     station_name: str
     gateway_id: int
     gateway_id_hex: str
@@ -104,13 +104,13 @@ class DavisWeatherStationsBase(BaseModel):
     longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     gateway_type: str
-    farm_id: int
-    field_ids: dict
+    farm_id: Optional[int] = None
+    field_ids: Optional[dict] = None
 
 class DavisMonitoringDevicesBase(BaseModel):
     monitoring_device_id: int
     station_id: int
-    station_id_uuid: int
+    station_id_uuid: str
     measurement: str
     created_date: float
     modified_date: float
@@ -130,8 +130,8 @@ class MetricaStationsBase(BaseModel):
     latitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
-    farm_id: int
-    field_ids: dict
+    farm_id: Optional[int] = None
+    field_ids: Optional[dict] = None
 
 class MetricaMonitoringDevicesBase(BaseModel):
     monitoring_device_id: str

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-__version__='1.6.2'
+__version__='1.6.3'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-17'
+__last_updated__='2025-03-19'
 
 from databases_companion.enum_variables import AccountType, ApplicationType, AdviceStatus, IconType
 from database.engine import Base
 from sqlalchemy import ForeignKey, Integer, Numeric, String, JSON, Boolean, DateTime, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import  Mapped, mapped_column
 from datetime import datetime
+from typing import Optional
 
 # Users
 class Users(Base):
@@ -134,8 +135,8 @@ class DavisWeatherStations(Base):
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     gateway_type: Mapped[str] = mapped_column(String(50))
-    farm_id: Mapped[int] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
-    field_ids: Mapped[dict] = mapped_column(type_=JSON, nullable=True) # {"field_ids":[1,3,4,...]}
+    farm_id: Mapped[Optional[int]] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
+    field_ids: Mapped[Optional[dict]] = mapped_column(type_=JSON, nullable=True) # {"field_ids":[1,3,4,...]}
 
 class DavisMonitoringDevices(Base):
     __tablename__ = 'davis_monitoring_devices'
@@ -165,8 +166,8 @@ class MetricaStations(Base):
     latitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
-    farm_id: Mapped[int] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
-    field_ids: Mapped[dict] = mapped_column(type_=JSON, nullable=True) # {"field_ids":[1,3,4,...]}
+    farm_id: Mapped[Optional[int]] = mapped_column(ForeignKey('farms_registry.farm_id', ondelete='SET NULL'), nullable=True)
+    field_ids: Mapped[Optional[dict]] = mapped_column(type_=JSON, nullable=True) # {"field_ids":[1,3,4,...]}
 
 class MetricaMonitoringDevices(Base):
     __tablename__ = 'metrica_monitoring_devices'
