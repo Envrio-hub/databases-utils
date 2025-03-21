@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-__version__='1.6.3'
+__version__='1.6.5'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-19'
+__last_updated__='2025-03-21'
 
 from databases_companion.enum_variables import AccountType, ApplicationType, AdviceStatus, IconType
 from database.engine import Base
@@ -127,7 +127,7 @@ class DavisWeatherStations(Base):
     product_number: Mapped[str] = mapped_column(String(50), nullable=False)
     active: Mapped[bool] = mapped_column(type_=Boolean, nullable=False, default=True)
     recording_interval: Mapped[int] = mapped_column(nullable=False)
-    firmware_version: Mapped[str] = mapped_column(String(20))
+    firmware_version: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     registered_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     subscription_end_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     time_zone: Mapped[str] = mapped_column(String(25), nullable=False)
@@ -152,6 +152,23 @@ class DavisMonitoringDevices(Base):
     longitude: Mapped[float] = mapped_column(Numeric(10,6), nullable= False)
     elevation: Mapped[float] = mapped_column(nullable=False)
     reference_offset: Mapped[float] = mapped_column(nullable=False)
+
+class DavisSensorCatalog(Base):
+    __tablename__ = 'davis_sensor_catalog'
+
+    sensor_type: Mapped[int] = mapped_column(primary_key=True)
+    manufacturer: Mapped[str] = mapped_column(String(100), nullable=False)
+    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    product_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    category: Mapped[str] =  mapped_column(String(100), nullable=False)
+    data_structures: Mapped[list] = mapped_column(JSON, nullable=False)
+
+class DavisDataStructures(Base):
+    __tablename__ = 'davis_data_structures'
+
+    data_structure_type: Mapped[str] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(String(150), nullable=False)
+    data_structure: Mapped[dict] = mapped_column(JSON, nullable=False)
 
 # Metrica IoT devices
 class MetricaStations(Base):

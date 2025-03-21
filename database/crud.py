@@ -1,7 +1,7 @@
-__version__='1.3.8'
+__version__='1.3.9'
 __authors__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-14'
+__last_updated__='2025-03-21'
 
 from database import models, schemas, engine
 from sqlalchemy.orm import Session
@@ -366,6 +366,45 @@ class DavisMonitoringDevices:
     @data_type_validator.validate_int('monitoring_device_id')
     def update_modified_date_by_monitoring_device_id(monitoring_device_id: int, new_modified_date:float, db: Session = None):
         db.execute(update(models.DavisMonitoringDevices).where(models.DavisMonitoringDevices.monitoring_device_id==monitoring_device_id).values(modified_date=new_modified_date))
+
+class DavisSensorCatalog:
+
+    @staticmethod
+    @data_base_decorators.session_handler_add_delete_update
+    def add(sensor_type: schemas.DavisSensorCatalogCreate, db: Session = None):
+        new_sensor_type = models.DavisMonitoringDevices(sensor_type=sensor_type.sensor_type, manufacturer=sensor_type.manufacturer,
+                                                        product_name=sensor_type.product_name, pruduct_number=sensor_type.product_number,
+                                                        category=sensor_type.category, data_structures=sensor_type.data_structures)
+        db.add(new_sensor_type)
+
+    @staticmethod
+    @data_type_validator.validate_int('sensor_type')
+    @data_base_decorators.session_handler_add_delete_update
+    def delete_by_sensor_type(sensor_type: int, db: Session = None):
+        result = db.execute(select(models.DavisSensorCatalog).filter_by(sensor_type=sensor_type)).scalar()
+        if result:
+            db.delete(result)
+        else:
+            return {"message": "Not Found", "errors": ["The provided sensor type does not exist"]}, 404
+        
+class DavisDataStructures:
+
+    @staticmethod
+    @data_base_decorators.session_handler_add_delete_update
+    def add(data_structure: schemas.DavisDataStructuresCreate, db: Session = None):
+        new_structure = models.DavisMonitoringDevices(data_structure_type=data_structure.data_structure_type, description=data_structure.description,
+                                                      data_structure=data_structure.data_structure)
+        db.add(new_structure)
+
+    @staticmethod
+    @data_type_validator.validate_str('data_structure_type')
+    @data_base_decorators.session_handler_add_delete_update
+    def delete_by_data_structure_type(data_structure_type: str, db: Session = None):
+        result = db.execute(select(models.DavisDataStructures).filter_by(data_structure_type=data_structure_type)).scalar()
+        if result:
+            db.delete(result)
+        else:
+            return {"message": "Not Found", "errors": ["The provided sensor type does not exist"]}, 404
 
 class MetricaStations:
 

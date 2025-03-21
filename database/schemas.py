@@ -1,7 +1,7 @@
-__version__='1.4.3'
+__version__='1.4.5'
 __author__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-19'
+__last_updated__='2025-03-21'
 
 from pydantic import BaseModel, condecimal
 from databases_companion.enum_variables import AccountType, IconType
@@ -96,7 +96,7 @@ class DavisWeatherStationsBase(BaseModel):
     product_number: str
     active: bool
     recording_interval: int
-    firmware_version: str
+    firmware_version: Optional[str] = None
     registered_date: float
     subscription_end_date: float
     time_zone: str
@@ -119,6 +119,19 @@ class DavisMonitoringDevicesBase(BaseModel):
     longitude: Annotated[Decimal, condecimal(max_digits=10, decimal_places=6)]
     elevation: float
     reference_offset: float
+
+class DavisSensorCatalogBase(BaseModel):
+    sensor_type: int
+    manufacturer: str
+    product_name: str
+    product_number: str
+    category: str
+    data_structures: list
+
+class DavisDataStructuresBase(BaseModel):
+    data_structure_type: str
+    description: str
+    data_structure: dict
 
 class MetricaStationsBase(BaseModel):
     station_id: str
@@ -213,6 +226,12 @@ class DavisWeatherStationsCreate(DavisWeatherStationsBase):
     pass
 
 class DavisMonitoringDevicesCreate(DavisMonitoringDevicesBase):
+    pass
+
+class DavisSensorCatalogCreate(DavisSensorCatalogBase):
+    pass
+
+class DavisDataStructuresCreate(DavisDataStructuresBase):
     pass
 
 class MetricaStationsCreate(MetricaStationsBase):
