@@ -1,7 +1,7 @@
-__version__='1.3.9'
+__version__='1.3.11'
 __authors__=['Ioannis Tsakmakis']
 __date_created__='2023-10-20'
-__last_updated__='2025-03-21'
+__last_updated__='2025-06-24'
 
 from database import models, schemas, engine
 from sqlalchemy.orm import Session
@@ -392,9 +392,14 @@ class DavisDataStructures:
     @staticmethod
     @data_base_decorators.session_handler_add_delete_update
     def add(data_structure: schemas.DavisDataStructuresCreate, db: Session = None):
-        new_structure = models.DavisMonitoringDevices(data_structure_type=data_structure.data_structure_type, description=data_structure.description,
+        new_structure = models.DavisDataStructures(data_structure_type=data_structure.data_structure_type, description=data_structure.description,
                                                       data_structure=data_structure.data_structure)
         db.add(new_structure)
+
+    @staticmethod
+    @data_base_decorators.session_handler_query
+    def get_registered_structures(db: Session):
+        return db.execute(select(models.DavisDataStructures)).scalars().all()
 
     @staticmethod
     @data_type_validator.validate_str('data_structure_type')
